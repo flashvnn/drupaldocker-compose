@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  reverseproxy:
+    image: nginx:alpine
+    ports:
+      - 80:80
+    restart: always
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+  db:
+    image: mysql
+    volumes:
+      - ./db-backups:/var/mysql/backups:delegated
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: web1_db
+      MYSQL_USER: web1
+      MYSQL_PASSWORD: web1
+  pma:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: root
+      PHP_UPLOAD_MAX_FILESIZE: 1G
+      PHP_MAX_INPUT_VARS: 1G
+    ports:
+     - "8001:80"
+  web1:
+    depends_on:
+      - reverseproxy
+    image: flashvnn/drupalphp:7.1
+    restart: always
+    volumes:
+      - ./docroot/web1:/var/www/html:cached
+  web2:
+    depends_on:
+      - reverseproxy
+    image: flashvnn/drupalphp:7.1
+    restart: always
+    volumes:
+      - ./docroot/web2:/var/www/html:cached
